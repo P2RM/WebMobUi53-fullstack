@@ -9,8 +9,10 @@ use Illuminate\Http\Request;
 
 class ApiPollOptionController extends Controller
 {
+    //créer option
     public function store(Request $request, int $pollId)
     {
+        //double verif (existe & owner)
         $poll = Poll::where('id', $pollId)->where('user_id', $request->user()->id)->first();
 
         if (!$poll) {
@@ -21,13 +23,15 @@ class ApiPollOptionController extends Controller
             'label' => 'required|string|max:255',
         ]);
 
-        $option = $poll->options()->create($data);
+        $option = $poll->options()->create($data); //créer option
 
         return response()->json($option, 201);
     }
 
+    //maj option
     public function update(Request $request, int $pollId, int $optionId)
     {
+        //double verif (existe & owner)
         $poll = Poll::where('id', $pollId)->where('user_id', $request->user()->id)->first();
 
         if (!$poll) {
@@ -49,8 +53,10 @@ class ApiPollOptionController extends Controller
         return response()->json($option);
     }
 
+    //supprimer option
     public function destroy(Request $request, int $pollId, int $optionId)
     {
+        //double verif (existe & owner)
         $poll = Poll::where('id', $pollId)->where('user_id', $request->user()->id)->first();
 
         if (!$poll) {

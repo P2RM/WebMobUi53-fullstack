@@ -18,6 +18,8 @@ Route::apiResource('v1/posts', ApiPostController::class)
     ->middlewareFor(['update'], ['auth:sanctum', 'abilities:posts:update'])
     ->middlewareFor(['destroy'], ['auth:sanctum', 'abilities:posts:delete']);
 
+//AJOUTS:
+
 Route::get('/v1/polls/{token}', [ApiPollController::class, 'show']);
 
 Route::middleware('auth:sanctum')->group(function () {

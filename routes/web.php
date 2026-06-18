@@ -31,8 +31,10 @@ Route::controller(AuthController::class)->group(function () {
     Route::post('/auth/login', 'login');
 });
 
+//AJOUTS:
+
 Route::middleware('auth')->group(function () {
-    Route::get('/polls/dashboard', PollDashboardController::class)->name('polls.dashboard');
+    Route::get('/polls/dashboard', PollDashboardController::class)->name('polls.dashboard'); // <--
     Route::resource('posts', PostController::class)->except(['index', 'show']);
     Route::singleton('my-profile', MyProfileController::class)->destroyable();
     Route::match(['put', 'patch'], '/likes/{post}', [LikeController::class, 'update']);

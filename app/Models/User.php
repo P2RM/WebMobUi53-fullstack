@@ -29,17 +29,17 @@ class User extends Authenticatable
         return $this->belongsToMany(Post::class, 'likes')->using(Like::class)->withTimestamps()->withPivot('reaction');
     }
 
-    /**
-     * Get the polls created by the user.
-     */
+
+    //NOUVEAU
+
+    //polls créé par usr
     public function polls(): HasMany
     {
         return $this->hasMany(Poll::class);
     }
 
-    /**
-     * Get the poll votes cast by the user.
-     */
+
+    // pas use (déjà comme ca dans poll_votes comme on a colonne user_id (1 usr -> peut avoir plsr lignes de la table)
     public function pollVotes(): HasMany
     {
         return $this->hasMany(PollVote::class);

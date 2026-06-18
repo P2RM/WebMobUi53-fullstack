@@ -8,9 +8,7 @@ use Illuminate\Http\Request;
 
 class ApiPollController extends Controller
 {
-    /**
-     * Display a listing of the authenticated user's polls.
-     */
+    //return polls du usr connecté
     public function index(Request $request)
     {
         $polls = $request->user()->polls()->with('options')->orderBy('created_at', 'desc')->get();
@@ -18,12 +16,13 @@ class ApiPollController extends Controller
         return $polls;
     }
 
+    //créer un poll
     public function store(Request $request)
     {
     $data = $request->validate([
         'question'               => 'required|string|max:255',
-        'title'                  => 'nullable|string|max:255',
-        'allow_multiple_choices' => 'sometimes|boolean',
+        'title'                  => 'nullable|string|max:255', //peut etre null
+        'allow_multiple_choices' => 'sometimes|boolean', //facultatif (si là = boolean)
         'results_public'         => 'sometimes|boolean',
         'duration'               => 'nullable|integer|min:1',
     ]);
@@ -32,41 +31,38 @@ class ApiPollController extends Controller
         'user_id'                => $request->user()->id,
         'question'               => $data['question'],
         'title'                  => $data['title'] ?? null,
-        'secret_token'           => \Illuminate\Support\Str::random(32),
-        'is_draft'               => true,
+        'secret_token'           => \Illuminate\Support\Str::random(32), //token random par poll (remplace)
+        'is_draft'               => true, //commence de base en brouillon
         'allow_multiple_choices' => $data['allow_multiple_choices'] ?? false,
         'results_public'         => $data['results_public'] ?? false,
         'duration'               => $data['duration'] ?? null,
     ]);
 
-        return response()->json($poll->load('options'), 201);
+        return response()->json($poll->load('options'), 201); //return poll créé
     }
 
-    /**
-     * Display the specified poll by its secret token.
-     */
+    //affichage du poll par token
     public function show(string $token)
     {
         $poll = Poll::with(['options' => function ($query) {
-            $query->withCount('votes');
+            $query->withCount('votes'); //charge aussi nb votes (votes_count sur chaque option)
         }])->where('secret_token', $token)->first();
 
         if (!$poll) {
             return response()->json(['message' => 'Poll not found.'], 404);
         }
 
-        $user = auth('sanctum')->user();
-        $poll->is_owner = $user && $user->id === $poll->user_id;
+        $user = auth('sanctum')->user();//recup usr mais pas request car peut ne pas être connecté (vote sans login)
+                                        //(utile pour savoir si owner)
+        $poll->is_owner = $user && $user->id === $poll->user_id; //affichage result au owner mm si resultats privés
 
         return $poll;
     }
 
-    /**
-     * Remove the specified poll.
-     */
+    //supprimer poll
     public function remove(Request $request, int $id)
     {
-        $poll = Poll::where('id', $id)->where('user_id', $request->user()->id)->first();
+        $poll = Poll::where('id', $id)->where('user_id', $request->user()->id)->first(); //double verif (existe & owner)
 
         if (!$poll) {
             return response()->json(['message' => 'Poll not found.'], 404);
@@ -77,6 +73,7 @@ class ApiPollController extends Controller
         return response()->json(['message' => 'success'], 200);
     }
 
+    //maj
     public function update(Request $request, int $id)
     {
         $poll = Poll::where('id', $id)->where('user_id', $request->user()->id)->first();
@@ -85,6 +82,8 @@ class ApiPollController extends Controller
             return response()->json(['message' => 'Poll not found.'], 404);
         }
 
+        //sometimes|required -> si champ envoyé = obligatoire
+        // mais peut ne pas être envoyé (modif partiellement sans tout refaire)
         $data = $request->validate([
             'question' => 'sometimes|required|string|max:255',
             'title' => 'nullable|string|max:255',
@@ -98,6 +97,7 @@ class ApiPollController extends Controller
         return response()->json($poll->load('options'));
     }
 
+    //lance draft
     public function start(Request $request, int $id)
     {
         $poll = Poll::where('id', $id)->where('user_id', $request->user()->id)->first();
@@ -114,7 +114,7 @@ class ApiPollController extends Controller
         $poll->started_at = now();
 
         if ($poll->duration) {
-            $poll->ends_at = now()->addSeconds($poll->duration);
+            $poll->ends_at = now()->addSeconds($poll->duration); //calc date fin
         }
 
         $poll->save();
